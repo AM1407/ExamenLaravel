@@ -19,25 +19,16 @@ class Task extends Model
         ];
     }
 
-    /**
-     * Get the user that this task is assigned to
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get all comments on this task
-     */
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
-    /**
-     * Mark task as in progress (start time tracking)
-     */
     public function startProgress(): void
     {
         if ($this->status === 'pending') {
@@ -48,9 +39,6 @@ class Task extends Model
         }
     }
 
-    /**
-     * Mark task as completed (stop time tracking)
-     */
     public function completeTask(): void
     {
         if ($this->status !== 'completed') {
@@ -61,10 +49,6 @@ class Task extends Model
         }
     }
 
-    /**
-     * Get time elapsed since task was started
-     * Returns human-readable format (e.g., "2 hours ago")
-     */
     public function getTimeElapsedAttribute(): ?string
     {
         if (!$this->started_at) {
@@ -72,12 +56,23 @@ class Task extends Model
         }
 
         $endTime = $this->completed_at ?? Carbon::now();
-        return $this->started_at->diffForHumans($endTime, ['absolute' => true]);
+
+        $minutes = (int) $this->started_at->diffInMinutes($endTime);
+        $hours   = (int) $this->started_at->diffInHours($endTime);
+        $days    = (int) $this->started_at->diffInDays($endTime);
+
+        if ($days >= 7) {
+            $weeks = (int) floor($days / 7);
+            return $weeks === 1 ? '1 week' : "$weeks weeks";
+        } elseif ($days > 0) {
+            return $days === 1 ? '1 day' : "$days days";
+        } elseif ($hours > 0) {
+            return $hours === 1 ? '1 hour' : "$hours hours";
+        } else {
+            return $minutes === 1 ? '1 minute' : "$minutes minutes";
+        }
     }
 
-    /**
-     * Get total hours spent on task
-     */
     public function getTotalHoursAttribute(): ?float
     {
         if (!$this->started_at) {
@@ -88,9 +83,7 @@ class Task extends Model
         return round($this->started_at->diffInMinutes($endTime) / 60, 2);
     }
 
-    /**
-     * Check if task is overdue (more than 24 hours in progress)
-     */
+    // overdue = started more than 24 hours ago and not yet completed
     public function getIsOverdueAttribute(): bool
     {
         if (!$this->started_at || $this->status === 'completed') {
@@ -100,17 +93,11 @@ class Task extends Model
         return $this->started_at->addDay()->isPast();
     }
 
-    /**
-     * Get formatted created date
-     */
     public function getFormattedCreatedDateAttribute(): string
     {
         return $this->created_at->format('M d, Y \a\t H:i');
     }
 
-    /**
-     * Get formatted started date
-     */
     public function getFormattedStartedDateAttribute(): ?string
     {
         if (!$this->started_at) {
@@ -120,9 +107,6 @@ class Task extends Model
         return $this->started_at->format('M d, Y \a\t H:i');
     }
 
-    /**
-     * Get formatted completed date
-     */
     public function getFormattedCompletedDateAttribute(): ?string
     {
         if (!$this->completed_at) {
@@ -132,9 +116,6 @@ class Task extends Model
         return $this->completed_at->format('M d, Y \a\t H:i');
     }
 
-    /**
-     * Get days since task was created
-     */
     public function getDaysSinceCreatedAttribute(): int
     {
         return $this->created_at->diffInDays(Carbon::now());

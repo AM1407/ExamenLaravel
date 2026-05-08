@@ -49,7 +49,7 @@
                         <div class="form-group">
                             <label>Assign To *</label>
                             <select name="user_id" required>
-                                @foreach(\App\Models\User::all() as $user)
+                                @foreach($users as $user)
                                     <option value="{{ $user->id }}" {{ old('user_id', $task->user_id) == $user->id ? 'selected' : '' }}>
                                         {{ $user->name }}
                                     </option>

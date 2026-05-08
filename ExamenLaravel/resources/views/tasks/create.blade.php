@@ -27,7 +27,7 @@
                 <label>Assign To *</label>
                 <select name="user_id" required>
                     <option value="">-- Select a team member --</option>
-                    @foreach(\App\Models\User::all() as $user)
+                    @foreach($users as $user)
                         <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
                             {{ $user->name }}
                         </option>

@@ -15,7 +15,6 @@
         </div>
     @endif
 
-    <!-- Tasks Table -->
     <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
@@ -72,12 +71,10 @@
         </table>
     </div>
 
-    <!-- Pagination -->
     <div style="margin-top: 2rem; display: flex; justify-content: center;">
         {{ $tasks->links() }}
     </div>
 
-    <!-- Page Info -->
     <div style="text-align: center; margin-top: 1.5rem; color: #666; font-size: 0.9rem;">
         Showing {{ $tasks->firstItem() ?? 0 }} to {{ $tasks->lastItem() ?? 0 }} of {{ $tasks->total() }} tasks
     </div>
