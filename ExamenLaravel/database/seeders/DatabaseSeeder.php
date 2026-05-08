@@ -120,10 +120,11 @@ class DatabaseSeeder extends Seeder
 
     private function getRealisticStatus(int $index): string
     {
+        // 60% pending, 30% in_progress, 10% completed
         if ($index % 10 === 0) {
-            return 'done';
+            return 'completed';
         } elseif ($index % 3 === 0) {
-            return 'in-progress';
+            return 'in_progress';
         }
         return 'pending';
     }

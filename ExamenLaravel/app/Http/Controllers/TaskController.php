@@ -36,6 +36,9 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
         ]));
+
+        return redirect()->route('tasks.index')
+            ->with('success', 'Task created successfully!');
     }
 
     /**
@@ -49,9 +52,10 @@ class TaskController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Task $task)
     {
-        //
+        $users = User::all();
+        return view('tasks.edit', compact('task', 'users'));
     }
 
     /**
@@ -66,7 +70,7 @@ class TaskController extends Controller
             'user_id' => 'required|exists:users,id',
         ]));
 
-        if ($request->status === 'done') {
+        if ($request->status === 'completed') {
             $this->notifySlack($task);
         }
 

@@ -334,7 +334,6 @@
         <h1>📋 Task Manager</h1>
         <ul>
             <li><a href="{{ route('tasks.index') }}">All Tasks</a></li>
-            <li><a href="{{ route('tasks.create') }}">New Task</a></li>
             <li class="user-info">👤 Demo User</li>
         </ul>
     </nav>

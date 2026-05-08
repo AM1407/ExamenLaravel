@@ -65,7 +65,7 @@
                             <select name="status" onchange="this.form.submit()" style="padding: 0.4rem; border-radius: 4px; border: 1px solid #ddd;">
                                 <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="in-progress" {{ $task->status === 'in-progress' ? 'selected' : '' }}>In Progress</option>
-                                <option value="done" {{ $task->status === 'done' ? 'selected' : '' }}>Done</option>
+                                <option value="done" {{ $task->status === 'completed' ? 'selected' : '' }}>Completed</option>
                             </select>
                             <!-- Hidden inputs to preserve other fields -->
                             <input type="hidden" name="title" value="{{ $task->title }}">
