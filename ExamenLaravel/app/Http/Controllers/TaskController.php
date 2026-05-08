@@ -5,30 +5,23 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Task;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class TaskController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $tasks = Task::with('user', 'comments')->get();
-        $users = User::all();
-        return view('tasks.index', compact('tasks', 'users'));
+        $tasks = Task::with('user', 'comments')->paginate(10);
+        return view('tasks.index', compact('tasks'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        $users = User::all();
+        return view('tasks.create', compact('users'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         Task::create($request->validate([
@@ -41,52 +34,50 @@ class TaskController extends Controller
             ->with('success', 'Task created successfully!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Task $task)
     {
         $users = User::all();
+        $task->load('comments.user');
         return view('tasks.edit', compact('task', 'users'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Task $task)
     {
-        $task->update($request->validate([
-            'title' => 'required|string|max:255',
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|in:pending,in_progress,done',
-            'user_id' => 'required|exists:users,id',
-        ]));
+            'status'      => 'required|in:pending,in_progress,completed',
+            'user_id'     => 'required|exists:users,id',
+        ]);
 
-        if ($request->status === 'completed') {
+        $wasNotCompleted = $task->status !== 'completed';
+
+        if ($request->status === 'in_progress' && $task->status !== 'in_progress') {
+            $validated['started_at'] = Carbon::now();
+        }
+
+        if ($request->status === 'completed' && $wasNotCompleted) {
+            $validated['completed_at'] = Carbon::now();
+        }
+
+        $task->update($validated);
+
+        // Fire Slack AFTER update, only if it just became completed
+        if ($request->status === 'completed' && $wasNotCompleted) {
             $this->notifySlack($task);
         }
 
-        return redirect('/tasks')->with('success', 'Task updated successfully!');
+        return redirect()->route('tasks.index')->with('success', 'Task updated successfully!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Task $task)
     {
         $task->delete();
-        return redirect('/tasks')->with('success', 'Task deleted successfully!');
+        return redirect()->route('tasks.index')->with('success', 'Task deleted successfully!');
     }
 
-    public function notifySlack(Task $task) {
+    private function notifySlack(Task $task): void
+    {
         $webhookUrl = env('SLACK_WEBHOOK_URL');
         if (!$webhookUrl) return;
 

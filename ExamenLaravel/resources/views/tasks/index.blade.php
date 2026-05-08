@@ -1,88 +1,82 @@
 @extends('layouts.app')
 
+@section('title', 'All Tasks')
+
 @section('content')
-<div style="max-width: 900px; margin: 0 auto; padding: 2rem;">
-    <h1>Task Manager</h1>
+<div style="max-width: 1200px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 style="margin: 0;">Tasks</h1>
+        <a href="{{ route('tasks.create') }}" class="btn btn-primary">+ Create New Task</a>
+    </div>
 
     @if(session('success'))
-        <div style="padding: 1rem; background: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 1rem;">
+        <div class="alert-success">
             {{ session('success') }}
         </div>
     @endif
 
-    <!-- Create Task Form -->
-    <form action="{{ route('tasks.store') }}" method="POST" style="margin-bottom: 2rem; background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
-        @csrf
-        <h3>Create New Task</h3>
-
-        <div style="margin-bottom: 1rem;">
-            <label>Title *</label>
-            <input type="text" name="title" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
-            @error('title') <span style="color: red;">{{ $message }}</span> @enderror
-        </div>
-
-        <div style="margin-bottom: 1rem;">
-            <label>Description</label>
-            <textarea name="description" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-height: 80px;"></textarea>
-        </div>
-
-        <div style="margin-bottom: 1rem;">
-            <label>Assign To *</label>
-            <select name="user_id" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
-                <option value="">-- Select User --</option>
-                @foreach($users as $user)
-                    <option value="{{ $user->id }}">{{ $user->name }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <button type="submit" style="padding: 0.5rem 1rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Create Task</button>
-    </form>
-
-    <!-- Tasks Table -->
-    <table style="width: 100%; border-collapse: collapse;">
-        <thead>
-            <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
-                <th style="text-align: left; padding: 1rem;">Task</th>
-                <th style="text-align: left; padding: 1rem;">Assigned To</th>
-                <th style="text-align: left; padding: 1rem;">Status</th>
-                <th style="text-align: center; padding: 1rem;">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($tasks as $task)
-                <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 1rem;">
-                        <strong>{{ $task->title }}</strong>
-                        @if($task->description)
-                            <p style="margin: 0.5rem 0 0; font-size: 0.9rem; color: #666;">{{ Str::limit($task->description, 60) }}</p>
-                        @endif
-                    </td>
-                    <td style="padding: 1rem;">{{ $task->user->name }}</td>
-                    <td style="padding: 1rem;">
-                        <form action="{{ route('tasks.update', $task) }}" method="POST" style="display: inline;">
-                            @csrf @method('PUT')
-                            <select name="status" onchange="this.form.submit()" style="padding: 0.4rem; border-radius: 4px; border: 1px solid #ddd;">
-                                <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="in-progress" {{ $task->status === 'in-progress' ? 'selected' : '' }}>In Progress</option>
-                                <option value="done" {{ $task->status === 'completed' ? 'selected' : '' }}>Completed</option>
-                            </select>
-                            <!-- Hidden inputs to preserve other fields -->
-                            <input type="hidden" name="title" value="{{ $task->title }}">
-                            <input type="hidden" name="description" value="{{ $task->description }}">
-                            <input type="hidden" name="user_id" value="{{ $task->user_id }}">
-                        </form>
-                    </td>
-                    <td style="text-align: center; padding: 1rem;">
-                        <a href="{{ route('tasks.edit', $task) }}" style="padding: 0.4rem 0.8rem; background: #17a2b8; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9rem;">Edit</a>
-                        <form action="{{ route('tasks.destroy', $task) }}" method="POST" style="display: inline;">
-                            @csrf @method('DELETE')
-                            <button type="submit" style="padding: 0.4rem 0.8rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">Delete</button>
-                        </form>
-                    </td>
+    <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <th style="text-align: left; padding: 1rem; font-weight: 600; color: #333;">Task</th>
+                    <th style="text-align: left; padding: 1rem; font-weight: 600; color: #333;">Assigned To</th>
+                    <th style="text-align: center; padding: 1rem; font-weight: 600; color: #333;">Status</th>
+                    <th style="text-align: center; padding: 1rem; font-weight: 600; color: #333;">Comments</th>
+                    <th style="text-align: center; padding: 1rem; font-weight: 600; color: #333;">Actions</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @forelse($tasks as $task)
+                    <tr style="border-bottom: 1px solid #dee2e6; transition: background-color 0.3s ease;">
+                        <td style="padding: 1rem;">
+                            <strong style="color: #333;">{{ $task->title }}</strong>
+                            @if($task->description)
+                                <p style="margin: 0.5rem 0 0; font-size: 0.9rem; color: #666;">{{ Str::limit($task->description, 60) }}</p>
+                            @endif
+                        </td>
+                        <td style="padding: 1rem; color: #666;">{{ $task->user->name }}</td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <span class="status-badge" style="
+                                @if($task->status === 'pending')
+                                    background: #fff3cd; color: #856404;
+                                @elseif($task->status === 'in_progress')
+                                    background: #cce5ff; color: #004085;
+                                @else
+                                    background: #d4edda; color: #155724;
+                                @endif
+                            ">
+                                {{ ucfirst(str_replace('_', ' ', $task->status)) }}
+                            </span>
+                        </td>
+                        <td style="padding: 1rem; text-align: center; color: #667eea; font-weight: 600;">
+                            {{ $task->comments->count() }}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <a href="{{ route('tasks.edit', $task) }}" class="btn btn-info btn-small" style="text-decoration: none;">Edit</a>
+                            <form action="{{ route('tasks.destroy', $task) }}" method="POST" style="display: inline;">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-small" onclick="return confirm('Delete this task?')">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" style="padding: 3rem; text-align: center; color: #999;">
+                            No tasks yet. <a href="{{ route('tasks.create') }}" style="color: #667eea; text-decoration: none;">Create one</a> to get started! 📝
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 2rem; display: flex; justify-content: center;">
+        {{ $tasks->links() }}
+    </div>
+
+    <div style="text-align: center; margin-top: 1.5rem; color: #666; font-size: 0.9rem;">
+        Showing {{ $tasks->firstItem() ?? 0 }} to {{ $tasks->lastItem() ?? 0 }} of {{ $tasks->total() }} tasks
+    </div>
 </div>
 @endsection

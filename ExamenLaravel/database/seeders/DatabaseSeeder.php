@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\Comment;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -102,14 +103,30 @@ class DatabaseSeeder extends Seeder
             'Run load tests to ensure server can handle peak traffic.',
         ];
 
-        $statuses = ['pending', 'in-progress', 'done'];
 
         foreach ($taskTitles as $index => $title) {
+            $status = $this->getRealisticStatus($index);
+
+
+            $startedAt = null;
+            $completedAt = null;
+
+            if ($status === 'in_progress') {
+
+                $startedAt = now()->subDays(rand(2, 5))->subHours(rand(0, 23));
+
+            } elseif ($status === 'completed') {
+                $startedAt = now()->subDays(rand(5, 15))->subHours(rand(0, 23));
+                $completedAt = $startedAt->addHours(rand(2, 48));
+            }
+
             $task = Task::create([
                 'title' => $title,
                 'description' => $descriptions[$index] ?? 'No description provided',
-                'status' => $this->getRealisticStatus($index),
+                'status' => $status,
                 'user_id' => $users->random()->id,
+                'started_at' => $startedAt,
+                'completed_at' => $completedAt,
             ]);
 
             if ($task->status !== 'pending' && rand(0, 1)) {
@@ -118,9 +135,9 @@ class DatabaseSeeder extends Seeder
         }
     }
 
+
     private function getRealisticStatus(int $index): string
     {
-        // 60% pending, 30% in_progress, 10% completed
         if ($index % 10 === 0) {
             return 'completed';
         } elseif ($index % 3 === 0) {
