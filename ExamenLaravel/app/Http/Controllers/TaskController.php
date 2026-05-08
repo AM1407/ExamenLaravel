@@ -13,7 +13,7 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $tasks = Task::with('user', 'comments')->get();
+        $tasks = Task::with('user', 'comments')->paginate(10);
         $users = User::all();
         return view('tasks.index', compact('tasks', 'users'));
     }
@@ -23,7 +23,8 @@ class TaskController extends Controller
      */
     public function create()
     {
-        //
+        $users = User::all();
+        return view('tasks.create', compact('users'));
     }
 
     /**
@@ -66,7 +67,7 @@ class TaskController extends Controller
         $task->update($request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|in:pending,in_progress,done',
+            'status' => 'required|in:pending,in_progress,completed',
             'user_id' => 'required|exists:users,id',
         ]));
 
@@ -74,7 +75,7 @@ class TaskController extends Controller
             $this->notifySlack($task);
         }
 
-        return redirect('/tasks')->with('success', 'Task updated successfully!');
+        return redirect()->route('tasks.index')->with('success', 'Task updated successfully!');
     }
 
     /**
