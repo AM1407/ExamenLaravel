@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Task;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class TaskController extends Controller
 {
@@ -43,21 +44,28 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title'       => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|in:pending,in_progress,completed',
-            'user_id' => 'required|exists:users,id',
+            'status'      => 'required|in:pending,in_progress,completed',
+            'user_id'     => 'required|exists:users,id',
         ]);
+
+        $wasNotCompleted = $task->status !== 'completed';
 
         if ($request->status === 'in_progress' && $task->status !== 'in_progress') {
             $validated['started_at'] = Carbon::now();
         }
 
-        if ($request->status === 'completed' && $task->status !== 'completed') {
-            $this->notifySlack($task);
+        if ($request->status === 'completed' && $wasNotCompleted) {
+            $validated['completed_at'] = Carbon::now();
         }
 
         $task->update($validated);
+
+        // Fire Slack AFTER update, only if it just became completed
+        if ($request->status === 'completed' && $wasNotCompleted) {
+            $this->notifySlack($task);
+        }
 
         return redirect()->route('tasks.index')->with('success', 'Task updated successfully!');
     }
@@ -70,7 +78,7 @@ class TaskController extends Controller
 
     private function notifySlack(Task $task): void
     {
-        $webhookUrl = config('services.slack.webhook_url');
+        $webhookUrl = env('SLACK_WEBHOOK_URL');
         if (!$webhookUrl) return;
 
         $payload = [
